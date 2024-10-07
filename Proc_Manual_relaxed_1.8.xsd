@@ -1,0 +1,1808 @@
+<?xml version="1.0"?>
+<!--
+  MOIS Sequence Procedure (relaxed) XML Schema
+
+  Version: 2.0 draft
+  
+  Date: 2015-02-09
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:proc="http://www.omg.org/space/procspec" targetNamespace="http://www.omg.org/space/procspec" elementFormDefault="qualified" attributeFormDefault="unqualified" version="2.0" id="Proc_Manual_relaxed_1.0r1">
+	<xs:annotation>
+		<xs:documentation>Procedure Metamodel Schema.</xs:documentation>
+	</xs:annotation>
+	<xs:simpleType name="staticRadixEnum">
+		<xs:annotation>
+			<xs:documentation>Radix representations of parameter values. Numeric raw values are decimal by default (RAW) but can also be input as Hexadecimal, Octal or Binary numbers. If value is neither RAW or CALIBRATED, FREETEXT is used</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="RAW"/>
+			<xs:enumeration value="RAWHEX"/>
+			<xs:enumeration value="RAWOCT"/>
+			<xs:enumeration value="RAWBIN"/>
+			<xs:enumeration value="CALORALIAS"/>
+			<xs:enumeration value="FREETEXT"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="varRadixEnum">
+		<xs:annotation>
+			<xs:documentation>Dynamic radix types - variables and  telemetry parameter values. VARIABLE means the corresponding value must be an existing Variable entry. TELEMETRY indicates the decimal numeric PID of a telemetry parameter. TELECOMMAND indicates the name of a TC.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="TELEMETRYRAWVALUE"/>
+			<xs:enumeration value="TELEMETRYCALVALUE"/>
+			<xs:enumeration value="VARIABLE"/>
+			<xs:enumeration value="TELEMETRY"/>
+			<xs:enumeration value="TELECOMMAND"/>
+			<xs:enumeration value="EVENT"/>
+			<xs:enumeration value="OBCP"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="valueRadixEnum">
+		<xs:annotation>
+			<xs:documentation>Fixed value unsigned radix types</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Decimal"/>
+			<xs:enumeration value="Hexadecimal"/>
+			<xs:enumeration value="Octal"/>
+			<xs:enumeration value="Binary"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="radixEnum">
+		<xs:annotation>
+			<xs:documentation>Dynamic radix types (staticRadixEnum + varRadixEnum). </xs:documentation>
+		</xs:annotation>
+		<xs:union memberTypes="proc:staticRadixEnum proc:varRadixEnum"/>
+	</xs:simpleType>
+	<xs:simpleType name="relationEnum">
+		<xs:annotation>
+			<xs:documentation>Standard relation operators</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="EQUALS"/>
+			<xs:enumeration value="NOTEQUALS"/>
+			<xs:enumeration value="LESSTHAN"/>
+			<xs:enumeration value="LESSTHANOREQUALS"/>
+			<xs:enumeration value="GREATERTHAN"/>
+			<xs:enumeration value="GREATERTHANOREQUALS"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="booleanOperator">
+		<xs:annotation>
+			<xs:documentation>Standard Boolean operators</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="AND"/>
+			<xs:enumeration value="OR"/>
+			<xs:enumeration value="XOR"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="unaryOperator">
+		<xs:annotation>
+			<xs:documentation>Unary arithmetic operators</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="-"/>
+			<xs:enumeration value="NOT"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="binaryOperator">
+		<xs:annotation>
+			<xs:documentation>Binary operators</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="+"/>
+			<xs:enumeration value="-"/>
+			<xs:enumeration value="*"/>
+			<xs:enumeration value="/"/>
+			<xs:enumeration value="^"/>
+			<xs:enumeration value="AND"/>
+			<xs:enumeration value="OR"/>
+			<xs:enumeration value="XOR"/>
+			<xs:enumeration value="=="/>
+			<xs:enumeration value="NE"/>
+			<xs:enumeration value="LT"/>
+			<xs:enumeration value="LE"/>
+			<xs:enumeration value="GT"/>
+			<xs:enumeration value="GE"/>
+			<xs:enumeration value="LEFTSHIFT"/>
+			<xs:enumeration value="RIGHTSHIFT"/>
+			<xs:enumeration value="BAND"/>
+			<xs:enumeration value="BOR"/>
+			<xs:enumeration value="BXOR"/>
+			<xs:enumeration value="CONCAT"/>
+			<xs:enumeration value="MOD"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="variableTypeEnum">
+		<xs:annotation>
+			<xs:documentation>The type of a variable</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="DERIVED"/>
+			<xs:enumeration value="BOOLEAN"/>
+			<xs:enumeration value="BYTE"/>
+			<xs:enumeration value="INTEGER"/>
+			<xs:enumeration value="LONG_INTEGER"/>
+			<xs:enumeration value="UNSIGNED_BYTE"/>
+			<xs:enumeration value="UNSIGNED_INTEGER"/>
+			<xs:enumeration value="UNSIGNED_LONG_INTEGER"/>
+			<xs:enumeration value="REAL"/>
+			<xs:enumeration value="DOUBLE"/>
+			<xs:enumeration value="RELATIVETIME"/>
+			<xs:enumeration value="ABSOLUTETIME"/>
+			<xs:enumeration value="STRING"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="TimeType">
+		<xs:annotation>
+			<xs:documentation>Absolute time +/- Relative time. Both fields can be a reference to a Variable (of type time). The absolute part can reference a label (defined in a Step or Stmt element).</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:choice minOccurs="0">
+				<xs:element name="absoluteTime" type="xs:dateTime">
+					<xs:annotation>
+						<xs:documentation>An absolute time literal</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="absoluteTimeLabel" type="xs:string">
+					<xs:annotation>
+						<xs:documentation>A label defined in a Step or Statement</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="absoluteTimeVariable" type="xs:string">
+					<xs:annotation>
+						<xs:documentation>A Variable of type ABSOLUTETIME. If a Variable array then the array index is enclosed by one or more brackets () directly after the variable.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:choice>
+			<xs:element name="negativeSign" type="xs:boolean" default="false" minOccurs="0"/>
+			<xs:choice minOccurs="0">
+				<xs:element name="relativeTime" type="xs:duration">
+					<xs:annotation>
+						<xs:documentation>A relative time literal</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="relativeTimeVariable" type="xs:string">
+					<xs:annotation>
+						<xs:documentation>A Variable of type RELATIVETIME. If a Variable array then the array index is  enclosed by one or more brackets () directly after the variable.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:choice>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ExecutionTimeType">
+		<xs:annotation>
+			<xs:documentation>Orbit angle radix followed by value.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="proc:TimeType">
+				<xs:choice minOccurs="0">
+					<xs:element name="orbitAngleVariable" type="xs:string">
+						<xs:annotation>
+							<xs:documentation>A Variable of type ABSOLUTETIME. If a Variable array then the array index is enclosed by one or more brackets () directly after the variable.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:sequence>
+						<xs:element name="orbitAngleRadix">
+							<xs:annotation>
+								<xs:documentation>A radix for an orbit angle</xs:documentation>
+							</xs:annotation>
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:enumeration value="DEG"/>
+									<xs:enumeration value="RAD"/>
+									<xs:enumeration value="OAG"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="negativeSign" type="xs:boolean" default="false" minOccurs="0"/>
+						<xs:element name="orbitAngle">
+							<xs:annotation>
+								<xs:documentation>An orbit angle value. Orbit number is allowed e.g. 1-20 for orbit 1 angle 20.</xs:documentation>
+							</xs:annotation>
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:pattern value="(\d+\-)?\d*\.?\d*"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:choice>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="StepType">
+		<xs:annotation>
+			<xs:documentation>Steps are the procedure building blocks - the nodes in the flow-chart view.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:group ref="proc:StepHeader">
+				<xs:annotation>
+					<xs:documentation>Step header</xs:documentation>
+				</xs:annotation>
+			</xs:group>
+			<xs:choice minOccurs="0">
+				<xs:element name="PERFORMstep">
+					<xs:annotation>
+						<xs:documentation>Sequential non-branching step.</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence minOccurs="0" maxOccurs="unbounded">
+							<xs:choice minOccurs="0">
+								<xs:element ref="proc:CommentStmt"/>
+								<xs:group ref="proc:AllStmts"/>
+							</xs:choice>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="DecisionStep">
+					<xs:annotation>
+						<xs:documentation>Simple decision step.</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:choice minOccurs="0">
+								<xs:element name="ArithmeticResult" minOccurs="0">
+									<xs:annotation>
+										<xs:documentation>The (boolean) result of an arithmetic expression</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:group ref="proc:ArithmeticResult"/>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="BooleanResult" minOccurs="0">
+									<xs:annotation>
+										<xs:documentation>The result of booleanExpression</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:group ref="proc:BooleanResult"/>
+									</xs:complexType>
+								</xs:element>
+							</xs:choice>
+							<xs:choice>
+								<xs:annotation>
+									<xs:documentation>Steps branching on booleanResult</xs:documentation>
+								</xs:annotation>
+								<xs:element name="IF">
+									<xs:annotation>
+										<xs:documentation>IF-THEN-ELSE branch. stepHeadingLevel = 1 only.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="THEN">
+												<xs:annotation>
+													<xs:documentation>Branch taken when booleanResult is True.</xs:documentation>
+												</xs:annotation>
+												<xs:complexType>
+													<xs:sequence>
+														<xs:element name="THENBranchName" minOccurs="0">
+															<xs:annotation>
+																<xs:documentation>For display purposes only. Valid pairs are then/else, yes/no, y/n, true/false, ok/nok, go/nogo and valid/invalid.</xs:documentation>
+															</xs:annotation>
+														</xs:element>
+														<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded"/>
+													</xs:sequence>
+												</xs:complexType>
+											</xs:element>
+											<xs:element name="ELSE" minOccurs="0">
+												<xs:annotation>
+													<xs:documentation>Branch taken when booleanResult is False.</xs:documentation>
+												</xs:annotation>
+												<xs:complexType>
+													<xs:sequence>
+														<xs:element name="ELSEBranchName" minOccurs="0">
+															<xs:annotation>
+																<xs:documentation>For display purposes only. Valid pairs are then/else, yes/no, y/n, true/false, ok/nok, go/nogo and valid/invalid.</xs:documentation>
+															</xs:annotation>
+														</xs:element>
+														<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded"/>
+													</xs:sequence>
+												</xs:complexType>
+											</xs:element>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="WHILE">
+									<xs:annotation>
+										<xs:documentation>Repeats as long as booleanResult is True. stepHeadingLevel = 1 only.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="REPEAT">
+												<xs:complexType>
+													<xs:sequence>
+														<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded"/>
+													</xs:sequence>
+												</xs:complexType>
+											</xs:element>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="REPEAT_UNTIL">
+									<xs:annotation>
+										<xs:documentation>Repeats until booleanResult is True. The test is made at the end of the loop (so it executes at least once). stepHeadingLevel = 1 only.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="REPEAT">
+												<xs:complexType>
+													<xs:sequence>
+														<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded"/>
+													</xs:sequence>
+												</xs:complexType>
+											</xs:element>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="WAIT">
+									<xs:annotation>
+										<xs:documentation>Waits until booleanResult is True.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="waitPollingPeriod" type="xs:duration">
+												<xs:annotation>
+													<xs:documentation>Period between booleanResult tests</xs:documentation>
+												</xs:annotation>
+											</xs:element>
+											<xs:element name="waitTimeoutPeriod" type="xs:duration" minOccurs="0">
+												<xs:annotation>
+													<xs:documentation>Timeout period</xs:documentation>
+												</xs:annotation>
+											</xs:element>
+											<xs:element name="CONTINUE" minOccurs="0">
+												<xs:annotation>
+													<xs:documentation>Executed when booleanResult is True.  Only useful if there are TIMEOUT steps. stepHeadingLevel = 1 only.</xs:documentation>
+												</xs:annotation>
+												<xs:complexType>
+													<xs:sequence>
+														<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded"/>
+													</xs:sequence>
+												</xs:complexType>
+											</xs:element>
+											<xs:element name="TIMEOUT" minOccurs="0">
+												<xs:annotation>
+													<xs:documentation>Executed on Timeout instead of CONTINUE steps. stepHeadingLevel = 1 only. </xs:documentation>
+												</xs:annotation>
+												<xs:complexType>
+													<xs:sequence>
+														<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded"/>
+													</xs:sequence>
+												</xs:complexType>
+											</xs:element>
+											<xs:element name="continueOnTimeout" type="xs:boolean" default="false" minOccurs="0">
+												<xs:annotation>
+													<xs:documentation>If false and no TIMEOUT steps then terminate execution on timeout. stepHeadingLevel = 1 only.</xs:documentation>
+												</xs:annotation>
+											</xs:element>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="PRECONDITION">
+									<xs:annotation>
+										<xs:documentation>IF-THEN branch. stepHeadingLevel >1 only.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="THEN">
+												<xs:annotation>
+													<xs:documentation>Branch taken when booleanResult is True.</xs:documentation>
+												</xs:annotation>
+												<xs:complexType>
+													<xs:sequence>
+														<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded"/>
+													</xs:sequence>
+												</xs:complexType>
+											</xs:element>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+							</xs:choice>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="FORstep">
+					<xs:annotation>
+						<xs:documentation>Counted loop step.</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="LoopVariableName" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Name of integer loop ariable to be checked. If a Variable array then the array index is  enclosed by one or more brackets () directly after the variable.</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="LoopVariableIncrement" type="xs:integer" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Value by which the loop variable is incremented (non-zero)</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="InitFORStmt" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Statement to initialise the loop Variable</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:group ref="proc:StmtHeader"/>
+										<xs:group ref="proc:SetVarValue"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="TestFORStmt" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Statement to check the loop variable. If true the variable is incremented by LoopVariableIncrement and the loop repeated</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:group ref="proc:StmtHeader"/>
+										<xs:group ref="proc:CheckVarValue"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="FOR">
+								<xs:annotation>
+									<xs:documentation>Repeats as long as TestFORStmt is True. stepHeadingLevel = 1 only.</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="REPEAT">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="SWITCHstep">
+					<xs:annotation>
+						<xs:documentation>Case selection step. stepHeadingLevel = 1 only.</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Case" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="caseBranchName" type="xs:string" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Name of the branch - for display purposes only.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:choice minOccurs="0">
+											<xs:element name="CaseArithmeticResult" minOccurs="0">
+												<xs:annotation>
+													<xs:documentation>The (boolean) result of an arithmetic expression</xs:documentation>
+												</xs:annotation>
+												<xs:complexType>
+													<xs:group ref="proc:ArithmeticResult"/>
+												</xs:complexType>
+											</xs:element>
+											<xs:element name="CaseBooleanResult" minOccurs="0">
+												<xs:annotation>
+													<xs:documentation>The result of booleanExpression</xs:documentation>
+												</xs:annotation>
+												<xs:complexType>
+													<xs:group ref="proc:BooleanResult"/>
+												</xs:complexType>
+											</xs:element>
+										</xs:choice>
+										<xs:element name="CaseExecute">
+											<xs:annotation>
+												<xs:documentation>Executed if CaseBooleanResult is true.</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Variable">
+		<xs:sequence>
+			<xs:element name="variableName" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>The name of the variable</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="variableCategoryEnum">
+				<xs:annotation>
+					<xs:documentation>Variables are LOCAL to the procedure, GLOBAL to all procedures or PROCEDURE PARAMETERS (arguments). There may also be a RETURN VALUE
+									for subprocedures.</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="LOCAL"/>
+						<xs:enumeration value="GLOBAL"/>
+						<xs:enumeration value="PROCEDURE_PARAMETER"/>
+						<xs:enumeration value="RETURN_VALUE"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="variableTypeEnum" type="proc:variableTypeEnum">
+				<xs:annotation>
+					<xs:documentation>If the variable is DERIVED then its exact type is inherited  from a TC or TM parameter - in this case the type is given in the variableDerivedTypeEnmum field. Otherwise it takes a standard variable type (Integer, String etc.). For languages that do not declare their variables (such as STOL) the type is arbitrary; no type checking will be performed.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="variableDerivedTypeEnum" type="proc:variableTypeEnum" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>The standard variable type (Integer, String etc.) in case of a DERIVED variable</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="variableProcParamOrder" type="xs:int" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Defines an order for the parameter declarations (counted from 1) if required.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="variableDefaultRadixEnum" type="proc:staticRadixEnum" minOccurs="0"/>
+			<xs:element name="variableDefault" type="xs:string" minOccurs="0"/>
+			<xs:element name="variableDescription" type="xs:string" minOccurs="0"/>
+			<xs:element name="variableReadOnly" type="xs:boolean" default="false" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>True = constant.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="variableInOut" type="xs:boolean" default="false" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>True = in/out parameter, default = in parameter.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ProcedureVariable">
+		<xs:complexContent>
+			<xs:extension base="proc:Variable">
+				<xs:sequence>
+					<xs:element name="variableArrayUpperBound" type="xs:int" minOccurs="0" maxOccurs="unbounded">
+						<xs:annotation>
+							<xs:documentation>If specified declares variable as an Array by specifying each of its dimensions. Not supported for DERIVED (VariableTypeEnum) types.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="SequenceVariable">
+		<xs:complexContent>
+			<xs:extension base="proc:Variable">
+				<xs:sequence>
+					<xs:element name="rangeSetOverride" type="xs:string" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>Range set override (must be compatible with referenced CmdParam or SeqParam)</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:group name="StmtHeader">
+		<xs:annotation>
+			<xs:documentation>Statement header.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="stmtDuration" type="xs:duration" minOccurs="0"/>
+			<xs:element name="stmtEndLabel" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Label applied to end of statement (referenced by TimeType elements).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stmtIsGeneric" type="xs:boolean" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>If true, statement is consistent with all the associated spacecraft (those listed in the Spacecraft element). If false then the statement need only be consistent with stmtSpacecraftName (multi-spacecraft missions only).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stmtIsMajorEvent" type="xs:boolean" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Mission specific attribute</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stmtLabel" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Label applied to start of statement (referenced by TimeType elements).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="StmtScheduledTime" type="proc:TimeType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Time at which statement should start (if not otherwise constrained).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="StmtEarliestTime" type="proc:TimeType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Planning attribute: Earliest time that statement can be planned to start.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="StmtLatestTime" type="proc:TimeType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Planning attribute: Latest time that statement can be planned to start.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stmtSpacecraftName" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Name of spacecraft whose data were used to derive the statement and with which it must remain consistent (multi-spacecraft missions only).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stmtTitle" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="StepHeader">
+		<xs:annotation>
+			<xs:documentation>Step header.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="stepHeadingLevel" type="xs:nonNegativeInteger">
+				<xs:annotation>
+					<xs:documentation>A number counted from 1 which determines a cumulative numbering scheme for the steps (e.g. 1.2.3.3) -  related to stepHeading.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepHeading" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Step heading derived cumulatively from stepHeadingLevel - e.g. 1.2.3.3.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepTitle" type="xs:string" minOccurs="0"/>
+			<xs:element name="stepBlockDuration" type="xs:duration" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Block container duration - if applicable.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepBlockName" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Optional block container marker. </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepDuration" type="xs:duration" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Estimated step duration (for planning purposes).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepScheduledTime" type="proc:TimeType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Time at which step should start (if not otherwise constrained).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepEarliestTime" type="proc:TimeType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Planning attribute: Earliest time that step can be planned to start. </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepLatestTime" type="proc:TimeType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Planning attribute: Latest time that step can be planned to start.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepLabel" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Label applied to start of step (referenced by TimeType elements).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepEndLabel" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Label applied to end of step (referenced by TimeType elements).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="stepIsMajorEvent" type="xs:boolean" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Mission specific attribute</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="seqName" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Sequence associated with this Step</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="nextStepHeading" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Step heading of next step or 0 if no next step exists</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="ProcHeader">
+		<xs:annotation>
+			<xs:documentation>Procedure header.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="procTitle" type="xs:string"/>
+			<xs:element name="procConstraintsSummary" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Descriptive text for heading</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procDate" type="xs:dateTime" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>The date the procedure was last modified.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procEstimatedDuration" type="xs:duration" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>The estimated procedure duration (for planning purposes).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procIsFlagCritical" type="xs:boolean" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Mission-specific flag indicating a 'critical' procedure.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procIsFlagPlannable" type="xs:boolean" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>True if the procedure is plannable in a mission planning system.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procIssue" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Procedure issue number - often refers to procedure library issues.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procMpsMode" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Planning attribute: mode during procedure execution.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procMpsPostMode" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Planning attribute: mode when procedure has completed.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procMpsPreMode" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Planning attribute: mode before procedure has started.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procObjectives" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Descriptive text for heading</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procPlanSource" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Planning source (if applicable).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procPostCondition" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Descriptive text for heading</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procPreCondition" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Descriptive text for heading</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procReference" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>List of referenced procedures for heading.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procAuthor" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Name of the procedure author.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procVersion" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Procedure version identification.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="procName" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Procedure name (usually identical to the file base name).</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="ObcpHeader" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Header data for OBCPs.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="obcpId" type="xs:int">
+							<xs:annotation>
+								<xs:documentation>32-bit integer defining the OBCP.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="obcpName" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Long readable name of the OBCP.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="obcpCode" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Short mnemonic of the OBCP.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="pidName" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Long readable name of the application process.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="pidCode" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Short mnemonic of the application process.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="pidNumber" type="xs:int" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Numeric identifier of the application process.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tmPeriod" type="xs:short">
+							<xs:annotation>
+								<xs:documentation>15-bit unsigned integer defining the periodicity of OBCP TM generation in number of OBSW cycles.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tmEnabled" type="xs:boolean">
+							<xs:annotation>
+								<xs:documentation>Flag defining whether OBCP TM generation is activated.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="ObcpParameter" minOccurs="0" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>List of OBCP parameters referenced by the procedure.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="obcpPrmName" type="xs:string">
+										<xs:annotation>
+											<xs:documentation>Name of the OBCP parameter.</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+									<xs:element name="obcpPrmProvided" type="xs:boolean">
+										<xs:annotation>
+											<xs:documentation>Indicates whether the OBCP parameter is provided by the procedure, otherwise it is only used.</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+									<xs:element name="obcpPrmReadOnly" type="xs:boolean">
+										<xs:annotation>
+											<xs:documentation>Flag defining whether OBCP parameter is read only or read/write.</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+									<xs:element name="obcpPrmTypeEnum" type="proc:variableTypeEnum" minOccurs="0">
+										<xs:annotation>
+											<xs:documentation>The parameter value type needs to be specified for OBCP parameters provided only.</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+						<xs:element name="TmParameter" minOccurs="0" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>List of TM parameters referenced by the procedure.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="tmPrmName" type="xs:string">
+										<xs:annotation>
+											<xs:documentation>Name of the TM parameter</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+						<xs:element name="Tc" minOccurs="0" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>List of telecommands referenced by the procedure.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="tcName" type="xs:string">
+										<xs:annotation>
+											<xs:documentation>Name of the TC</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+						<xs:element name="Event" minOccurs="0" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>List of events referenced by the procedure.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="eventName" type="xs:string">
+										<xs:annotation>
+											<xs:documentation>Name of the event</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="SeqHeader">
+		<xs:annotation>
+			<xs:documentation>Sequence header.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="seqDescr" type="xs:string"/>
+			<xs:element name="seqDetailedDescr" type="xs:string" minOccurs="0"/>
+			<xs:element name="seqFlagCritical" type="xs:boolean" default="false" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Mission-specific flag indicating a 'critical' sequence</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="seqFlagPlannable" type="xs:string" default="N" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>True if the sequence is plannable in a mission planning system.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="seqStandAlone" type="xs:boolean" default="true" minOccurs="0"/>
+			<xs:element name="seqSubSys" type="xs:int" minOccurs="0"/>
+			<xs:element name="seqSubSchedId" type="xs:int" minOccurs="0"/>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="BooleanResult">
+		<xs:annotation>
+			<xs:documentation>The Boolean result of an expression.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="NOT" type="xs:boolean" default="false" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>NOTs the bracketed expression</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Bracket" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Brackets the following expression</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:BooleanComponent"/>
+						<xs:sequence minOccurs="0" maxOccurs="unbounded">
+							<xs:element name="booleanOperator" type="proc:booleanOperator">
+								<xs:annotation>
+									<xs:documentation>AND, OR or XOR</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:group ref="proc:BooleanComponent"/>
+						</xs:sequence>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="BooleanComponent">
+		<xs:annotation>
+			<xs:documentation>A component of the expression yeilding a Boolean result</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:choice>
+				<xs:sequence minOccurs="0" maxOccurs="unbounded">
+					<xs:choice minOccurs="0">
+						<xs:element ref="proc:CommentStmt"/>
+						<xs:group ref="proc:BooleanStmts"/>
+					</xs:choice>
+				</xs:sequence>
+				<xs:group ref="proc:BooleanResult"/>
+			</xs:choice>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="ArithmeticResult">
+		<xs:annotation>
+			<xs:documentation>The arithmetic result of an expression.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="unaryOperator" type="proc:unaryOperator" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Applies a unary operator minus (-) or NOT to the bracketed expression</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Bracket" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Brackets the following expression</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:ArithmeticComponent"/>
+						<xs:sequence minOccurs="0">
+							<xs:element name="binaryOperator" type="proc:binaryOperator">
+								<xs:annotation>
+									<xs:documentation>Binary operator</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:group ref="proc:ArithmeticComponent"/>
+						</xs:sequence>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="ArithmeticComponent">
+		<xs:annotation>
+			<xs:documentation>A component of the expression yielding an arithmetic result</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:choice>
+				<xs:element name="variableName" type="xs:string">
+					<xs:annotation>
+						<xs:documentation>Varable name. If a Variable array then the array index is enclosed by one or more brackets () directly after the variable</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="telemetry" type="xs:string">
+					<xs:annotation>
+						<xs:documentation>Name of a telemetry parameter of which the current value shall be taken.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="fixedValue">
+					<xs:annotation>
+						<xs:documentation>A literal value in the expression</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute name="Radix" type="proc:valueRadixEnum" use="optional" default="Decimal"/>
+							</xs:extension>
+						</xs:simpleContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:group ref="proc:BooleanStmts"/>
+				<xs:group ref="proc:ArithmeticResult"/>
+			</xs:choice>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="Parameter">
+		<xs:annotation>
+			<xs:documentation>Generic parameter.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="fixed" type="xs:boolean" default="false" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Specifies if the parameter is defined as fixed for editing</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="paramName" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Parameter name</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="paramDescr" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Parameter description</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="paramEngUnit" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Parameter engineering unit</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="paramValueRadixEnum" type="proc:radixEnum">
+				<xs:annotation>
+					<xs:documentation>The paramValue radix: raw, calibrated or Variable.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="paramValue" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>The value of the parameter (or referenced Variable name).  If a Variable array then the array index is  enclosed by one or more brackets () directly after the variable. If passing a reference to a Variable array then the type and size must match.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="paramRawValue" type="xs:integer" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Can be additionally specified if paramValue denotes a calibrated value.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="groupRepeatSize" type="xs:integer" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Group Repeater: number of following command elements belonging to the group to be repeated ‘N’ times at load-time.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:sequence>
+				<xs:element name="ParamValueParam" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>Used for nested parameters, e.g. TC as TC parameter.</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:group ref="proc:Parameter"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:sequence>
+	</xs:group>
+	<xs:element name="CommentStmt">
+		<xs:annotation>
+			<xs:documentation>Statement to insert a comment.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="proc:StmtHeader"/>
+				<xs:element name="commentText" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:group name="BooleanStmts">
+		<xs:annotation>
+			<xs:documentation>Statements that return a Boolean.</xs:documentation>
+		</xs:annotation>
+		<xs:choice>
+			<xs:element name="TlmStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to check the value of a telemetry parameter. Returns a Boolean.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="tlmName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>The name of the telemetry parameter.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmPid" type="xs:unsignedInt" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The PID of the telemetry parameter or its enclosing global if it is a detailed parameter.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmType" type="proc:variableTypeEnum" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The value type of the telemetry parameter.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmOffset" type="xs:unsignedShort" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The offset of the TLM parameter in its enclosing global, counted from the left (MSB).</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmLength" type="xs:unsignedShort" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The number of bits of this TLM parameter.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmDescr" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The description of the telemetry parameter</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmDetailedDescr" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The detailed description of the telemetry parameter</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmEngUnit" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The telemetry parameter engineering unit</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmGlobalLength" type="xs:unsignedShort" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The number of bits of the enclosing global TLM parameter.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmCmdRef" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The associated command reference if this is its Pre-Transmission-Validation (PTV) or Command-Execution-Verification (CEV) telemetry check, in the form stmtTitle cmdName.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmPacketRef" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The associated packet reference if this telemetry must be read from the same packet, in the form stmtTitle packetName.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmDisplayRef" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Display reference of one or more TM Parameters belonging to the original FOP</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmSelectedCalcurve" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The name of the selected calibration curve (if more than 1 is defined for the telemetry parameter).</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmTimeout" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Timeout waiting for the telemetry value (not supported by all control systems).</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="tlmTimeoutIsVariable" type="xs:boolean" default="false" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Indicates if the tlmTimeout field is a Variable,</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="TlmValueCheck" minOccurs="0" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>Checks performed on the telemetry parameter. Multiple checks are implicitly ANDed unless all the Relation operators are EQUALS when the checks are implicitly ORed. If checks are omitted an implicit check (such as a Status Consistency Check) is performed.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="tlmValueRelationEnum" type="proc:relationEnum"/>
+									<xs:element name="tlmValueRadixEnum" type="proc:radixEnum"/>
+									<xs:element name="tlmValue" type="xs:string">
+										<xs:annotation>
+											<xs:documentation>The value of the TM parameter (or referenced Variable name).  If a Variable array then the array index is  enclosed by one or more brackets () directly after the variable.</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="CheckVariableStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to check a variable against a fixed value, a variable or a telemetry parameter and return a Boolean.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="checkVariableName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Name of Variable to be checked. If a Variable array then the array index is  enclosed by one or more brackets () directly after the variable.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:group ref="proc:CheckVarValue"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="PacketStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to wait for a telemetry packet (where supported). Returns a Boolean (true if packet is received within the timeout period).</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="packetName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Name of the telemetry packet.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="packetDescr" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Description of the telemetry packet.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="packetTimeout" type="xs:duration" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Timeout waiting for the packet.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:choice>
+	</xs:group>
+	<xs:group name="AllStmts">
+		<xs:annotation>
+			<xs:documentation>All Statements.</xs:documentation>
+		</xs:annotation>
+		<xs:choice>
+			<xs:element name="CmdStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to send a telecommand.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="cmdName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>The command name</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="cmdDescr" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The command description</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="cmdDetailedDescr" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The command detailed description</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="CmdExecutionTime" type="proc:ExecutionTimeType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>On-board execution time (if destined for the on-board time-tagged queue (Master Schedule).</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="SubScheduleId" type="xs:long" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Value of the SubScheduleId of the command.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="CmdUplinkTime" type="proc:TimeType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Uplink time separation from the last command (timimg managed by the control system)</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="cmdParamSet" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Name of selected command parameter set (not supported by all control systems)</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="cmdParamValueSet" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Name of selected command parameter value set (not supported by all control systems)</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="cmdExecTimeout" type="xs:long" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Duration in seconds to wait for TC execution acknowledgement.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="CmdFlag" minOccurs="0" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>Set of mission specific command attributes (flags) indicating specific processing to be performed on the command by the control system . Examples are interlocks and blocks. </xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="cmdFlagName" type="xs:string"/>
+									<xs:element name="cmdFlagValue" type="xs:string"/>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+						<xs:element name="CmdParam" minOccurs="0" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>Command parameters.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:group ref="proc:Parameter"/>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="ProcCallStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to call another procedure.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="procCallName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Name of the called procedure.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="procCallDescr" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Description of the called procedure.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="procCallIsAsynchronous" type="xs:boolean" default="false" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>If true then do not wait for the called procedure to complete.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="procCallReturnVar" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The Variable into which the return value is written. If a Variable array then the array index is  enclosed by one or more brackets () directly after the variable.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="ProcParam" minOccurs="0" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:group ref="proc:Parameter"/>
+									<xs:element name="passByReference" type="xs:boolean" default="false" minOccurs="0">
+										<xs:annotation>
+											<xs:documentation>Pass the parameter by reference so that it can be changed by the called procedure. If applicable.</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="ControlStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to control execution.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="controlComment" type="xs:string" minOccurs="0"/>
+						<xs:choice>
+							<xs:element name="ControlSync">
+								<xs:annotation>
+									<xs:documentation>Wait for outstanding requested notifications from the control system).</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="controlSyncType">
+											<xs:annotation>
+												<xs:documentation>Synchronize on command UPLINK or command EXECUTION notifications.</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:enumeration value="UPLINK"/>
+													<xs:enumeration value="EXECUTION"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element name="controlSyncMinWait" type="xs:duration" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Minimum wait before accepting Synchronize notifications</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="controlSyncTimeout" type="xs:duration" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Timeout for Synchronize notifications.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="controlSyncStopOnTimeout" type="xs:boolean" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>If true procedure is halted on timeout.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="ControlPause">
+								<xs:annotation>
+									<xs:documentation>Pause the procedure for a given duration.</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="controlPauseDuration" type="xs:duration" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Pause duration</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="ControlTerminate">
+								<xs:annotation>
+									<xs:documentation>Terminate the procedure</xs:documentation>
+								</xs:annotation>
+								<xs:complexType/>
+							</xs:element>
+						</xs:choice>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="DirectiveStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to send an execution environment specific directive (or function)
+Directive signatures are defined in the Directives schema.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="directiveName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Name of the called Directive.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="directiveIsAsynchronous" type="xs:boolean" default="false" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>If true then do not wait for the called Directive to complete.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="directiveReturnVar" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>The Variable into which the return value is written. If a Variable array then the array index is  enclosed by one or more brackets () directly after the variable.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="DirectiveArgument" minOccurs="0" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:group ref="proc:Parameter"/>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="SetVariableStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to set a variable to a fixed value, another variable or a telemetry parameter value.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="setVariableName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>The Variable to be set. If a Variable array then the array index is  enclosed by one or more brackets () directly after the variable.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:group ref="proc:SetVarValue">
+							<xs:annotation>
+								<xs:documentation>RHS of Set Variable</xs:documentation>
+							</xs:annotation>
+						</xs:group>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="SetTelemetryStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to set a TM parameter to an engineered value.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="setTmParameterName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>The TM Parameter to be set.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="setTmValueRadixEnum" type="proc:radixEnum">
+							<xs:annotation>
+								<xs:documentation>Radix of set statement value </xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="setTmValue" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Fixed value on RHS (radix not Variable)</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="SendEventStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to send an event, optionally including associated data.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="eventName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>The event name (mnemonic)</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="arrayVarName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Name of a variable of array type containing the event data</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="numBytes" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Length in bytes of event data. May be a constant integer value or the name of an integer variable.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="WaitEventStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to wait for an event, optionally retrieving associated data.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="eventName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>The event name (mnemonic)</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="arrayVarName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Name of a variable of array type to receive the event data</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="numBytesVarName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Name of an integer variable containing the number of bytes.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="timeout" type="xs:long" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Optional timeout in seconds</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="SeqCallStmt">
+				<xs:annotation>
+					<xs:documentation>Statement to call another sequence.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:group ref="proc:StmtHeader"/>
+						<xs:element name="seqCallName" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Name of the called sequence.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="seqCallDescr" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Description of the called sequence.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="SeqParam" minOccurs="0" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:group ref="proc:Parameter"/>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:group ref="proc:BooleanStmts"/>
+		</xs:choice>
+	</xs:group>
+	<xs:group name="SetVarValue">
+		<xs:sequence>
+			<xs:element name="setVariableValueRadixEnum" type="proc:radixEnum">
+				<xs:annotation>
+					<xs:documentation>Radix of set statement value </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:choice>
+				<xs:element name="setVariableValue" type="xs:string">
+					<xs:annotation>
+						<xs:documentation>Fixed value on RHS (radix not Variable)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="setVariableExpression">
+					<xs:annotation>
+						<xs:documentation>Arithmetic expression of variables on RHS (radix = Variable)</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:group ref="proc:ArithmeticResult"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+			<xs:element name="setVariableIsUserInput" type="xs:boolean" default="false" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>If true procedure execution halts and the user is prompted for the value.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="CheckVarValue">
+		<xs:sequence>
+			<xs:element name="CheckVariableValue" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Value(s) to be checked</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="checkVariableValueId" type="xs:int">
+							<xs:annotation>
+								<xs:documentation>Unique value check identifier</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="checkVariableValueRelationEnum" type="proc:relationEnum">
+							<xs:annotation>
+								<xs:documentation>Standard relation operators</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="checkVariableValueRadixEnum" type="proc:radixEnum">
+							<xs:annotation>
+								<xs:documentation>Type of check - against value, Telemetry or variable</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="checkVariableValue" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Value to be checked. If a Variable array then the array index is  enclosed by one or more brackets () directly after the variable.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:group>
+	<xs:element name="Proc">
+		<xs:annotation>
+			<xs:documentation>A procedure consists of Steps  (procdeure building blocks) which contain executable Statements.  Certain elements within Statements can reference Variables. </xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="proc:Proc" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>Sub-programs expanded in the export</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:choice>
+					<xs:element name="Variable" type="proc:ProcedureVariable" minOccurs="0" maxOccurs="unbounded">
+						<xs:annotation>
+							<xs:documentation>Procedure variables.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Sequence" minOccurs="0" maxOccurs="unbounded">
+						<xs:annotation>
+							<xs:documentation>Sequence Information</xs:documentation>
+						</xs:annotation>
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="SeqHeader">
+									<xs:complexType>
+										<xs:group ref="proc:SeqHeader"/>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="seqName" type="xs:string">
+									<xs:annotation>
+										<xs:documentation>Mapped to the seqName field in the step headers.</xs:documentation>
+									</xs:annotation>
+								</xs:element>
+								<xs:element name="SeqVariable" type="proc:SequenceVariable" minOccurs="0" maxOccurs="unbounded">
+									<xs:annotation>
+										<xs:documentation>Sequence Variables</xs:documentation>
+									</xs:annotation>
+								</xs:element>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+				</xs:choice>
+				<xs:element name="Spacecraft" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>Spacecraft (databases) from which the procedure statements are derived and with which they should remain consistent (multi-spacecraft missions only).</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="spacecraftName" type="xs:string"/>
+							<xs:element name="spacecraftDescription" type="xs:string"/>
+							<xs:element name="databaseVersion">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="name" type="xs:string">
+											<xs:annotation>
+												<xs:documentation>The name of the database version.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="comment" type="xs:string" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Comment associated to the database version.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="domainId" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Domain Identifier associated to the database.</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="release" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Database Release</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="issue" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Database Issue</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="date" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Generation Date</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="version" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Database version</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="ProcBody">
+					<xs:annotation>
+						<xs:documentation>Procedure body.</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:group ref="proc:ProcHeader">
+								<xs:annotation>
+									<xs:documentation>Procedure header.</xs:documentation>
+								</xs:annotation>
+							</xs:group>
+							<xs:element name="Step" type="proc:StepType" maxOccurs="unbounded">
+								<xs:annotation>
+									<xs:documentation>Procedure step. Steps are the procedure building blocks.</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="generated">
+				<xs:annotation>
+					<xs:documentation>Generation date</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+		<xs:unique name="VariableConstraint1">
+			<xs:selector xpath="proc:Variable"/>
+			<xs:field xpath="proc:variableName"/>
+		</xs:unique>
+	</xs:element>
+</xs:schema>
